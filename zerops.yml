@@ -1,5 +1,6 @@
 # ZeroPulse — zerops.yaml
-# Build & deploy pipeline for the current Next.js app.
+# Build + runtime definition for this repo; standing Next.js artifact
+# is emitted via `output: "standalone"` in next.config.ts.
 
 zerops:
   - setup: frontend
@@ -9,11 +10,7 @@ zerops:
         - npm ci
         - npm run build
       deployFiles:
-        - .next/standalone
-        - .next/static
-        - public
-        - package.json
-        - package-lock.json
+        - .next/standalone/
       cache:
         - node_modules
         - .next/cache
