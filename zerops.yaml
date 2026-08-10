@@ -1,12 +1,12 @@
 # ZeroPulse — zerops.yaml
 # Build & deploy pipeline for runtime services.
+# Conforms to official Zerops JSON Schema.
 
 zerops:
   # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
   - setup: frontend
     build:
-      base: nodejs@22
-      os: ubuntu
+      base: ubuntu/nodejs@22
       buildCommands:
         - npm ci
         - npm run build
@@ -16,8 +16,7 @@ zerops:
       deployFiles:
         - .next/standalone/~
     run:
-      base: nodejs@22
-      os: ubuntu
+      base: ubuntu/nodejs@22
       ports:
         - port: 3000
           httpSupport: true
@@ -38,8 +37,7 @@ zerops:
   # ── Worker — background snapshot poller (private) ───────────────────────
   - setup: worker
     build:
-      base: nodejs@22
-      os: ubuntu
+      base: ubuntu/nodejs@22
       buildCommands:
         - npm ci
         - npm run build
@@ -49,8 +47,7 @@ zerops:
       deployFiles:
         - .next/standalone/~
     run:
-      base: nodejs@22
-      os: ubuntu
+      base: ubuntu/nodejs@22
       start: node server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
