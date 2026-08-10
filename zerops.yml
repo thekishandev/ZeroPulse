@@ -1,8 +1,7 @@
 # ZeroPulse — zerops.yaml
-# Build & deploy pipeline for runtime services.
+# Build & deploy pipeline for the current Next.js app.
 
 zerops:
-  # ── Frontend (Next.js SSR) ─────────────────────────────────────────────
   - setup: frontend
     build:
       base: nodejs@22
@@ -31,30 +30,3 @@ zerops:
         NODE_ENV: "production"
         HOSTNAME: "0.0.0.0"
         PORT: "3000"
-
-  # ── Worker — private background service ────────────────────────────────
-  # The repo does not contain a server.js worker. Keep the worker service as a
-  # runtime-only Next.js process instead of pointing it at a non-existing file.
-  - setup: worker
-    build:
-      base: nodejs@22
-      buildCommands:
-        - npm ci
-        - npm run build
-      deployFiles:
-        - .next/standalone
-        - .next/static
-        - public
-        - package.json
-        - package-lock.json
-      cache:
-        - node_modules
-        - .next/cache
-    run:
-      base: nodejs@22
-      start: node server.js
-      envVariables:
-        DATABASE_URL: ${db_connectionString}
-        MOCK_MODE: "false"
-        NODE_ENV: "production"
-        ZEROPULSE_WORKER: "true"
