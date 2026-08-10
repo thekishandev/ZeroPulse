@@ -10,10 +10,11 @@ zerops:
         - npm ci
         - npm run build
       deployFiles:
-        - .next
+        - .next/standalone
+        - .next/static
         - public
         - package.json
-        - node_modules
+        - package-lock.json
       cache:
         - node_modules
         - .next/cache
@@ -21,8 +22,9 @@ zerops:
       base: nodejs@22
       ports:
         - port: 3000
+          protocol: TCP
           httpSupport: true
-      start: npm start
+      start: node server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
@@ -30,7 +32,9 @@ zerops:
         HOSTNAME: "0.0.0.0"
         PORT: "3000"
 
-  # ── Worker — background snapshot poller (private) ───────────────────────
+  # ── Worker — private background service ────────────────────────────────
+  # The repo does not contain a server.js worker. Keep the worker service as a
+  # runtime-only Next.js process instead of pointing it at a non-existing file.
   - setup: worker
     build:
       base: nodejs@22
@@ -38,10 +42,11 @@ zerops:
         - npm ci
         - npm run build
       deployFiles:
-        - .next
+        - .next/standalone
+        - .next/static
         - public
         - package.json
-        - node_modules
+        - package-lock.json
       cache:
         - node_modules
         - .next/cache
