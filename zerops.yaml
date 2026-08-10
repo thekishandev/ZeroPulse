@@ -1,36 +1,28 @@
 # ZeroPulse — zerops.yaml
 # The Zerops project, watching itself.
-#
-# Services:
-#   frontend  — Next.js SSR app (public, httpSupport)
-#   db        — PostgreSQL 16 (private)
-#   cache     — Valkey 7 (private)
-#   worker    — Node.js background poller (private)
-#   storage   — Object storage (private)
 
 zerops:
   # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
   - setup: frontend
     build:
       base: nodejs@22
+      os: ubuntu
       buildCommands:
         - npm ci
         - npm run build
-        # Copy static + public INTO the standalone bundle so server.js can find them
         - cp -r .next/static .next/standalone/.next/static
         - cp -r public .next/standalone/public
       deployFiles:
-        # Deploy only the standalone bundle — it now contains everything
-        - .next/standalone
+        - .next/standalone/~
     run:
       base: nodejs@22
+      os: ubuntu
       ports:
         - port: 3000
           httpSupport: true
       initCommands:
-        # Push DB schema at startup (has DATABASE_URL available, build phase does not)
         - npx drizzle-kit push
-      start: node .next/standalone/server.js
+      start: node server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
@@ -56,16 +48,18 @@ zerops:
   - setup: worker
     build:
       base: nodejs@22
+      os: ubuntu
       buildCommands:
         - npm ci
         - npm run build
         - cp -r .next/static .next/standalone/.next/static
         - cp -r public .next/standalone/public
       deployFiles:
-        - .next/standalone
+        - .next/standalone/~
     run:
       base: nodejs@22
-      start: node .next/standalone/server.js
+      os: ubuntu
+      start: node server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
