@@ -1,14 +1,12 @@
 # ZeroPulse — zerops.yaml
 # The Zerops project, watching itself.
 #
-# Five services:
+# Services:
 #   frontend  — Next.js SSR app (public, httpSupport)
 #   db        — PostgreSQL 16 (private)
 #   cache     — Valkey 7 (private)
-#   worker    — Node.js cron poller (private)
-#   storage   — Object storage (private, for exported diagrams / badge PNGs)
-#
-# Get the free $15 credits: https://zerops.io/?utm_source=kunal
+#   worker    — Node.js background poller (private)
+#   storage   — Object storage (private)
 
 zerops:
   # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
@@ -17,22 +15,25 @@ zerops:
       base: nodejs@22
       buildCommands:
         - npm ci
-        - npx drizzle-kit push          # push schema on every deploy
         - npm run build
+        # Copy static + public INTO the standalone bundle so server.js can find them
+        - cp -r .next/static .next/standalone/.next/static
+        - cp -r public .next/standalone/public
       deployFiles:
+        # Deploy only the standalone bundle — it now contains everything
         - .next/standalone
-        - .next/static
-        - public
     run:
       base: nodejs@22
       ports:
         - port: 3000
           httpSupport: true
+      initCommands:
+        # Push DB schema at startup (has DATABASE_URL available, build phase does not)
+        - npx drizzle-kit push
       start: node .next/standalone/server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
-        OPENAI_API_KEY: ${OPENAI_API_KEY}
         NODE_ENV: "production"
         HOSTNAME: "0.0.0.0"
         PORT: "3000"
@@ -51,31 +52,27 @@ zerops:
     run:
       base: valkey@7
 
-  # ── Worker — cron poller (private) ─────────────────────────────────────
-  # Polls all connected projects on a schedule, writes snapshots to Postgres.
-  # Shares the same build as frontend — uses the standalone bundle.
+  # ── Worker — background snapshot poller (private) ───────────────────────
   - setup: worker
     build:
       base: nodejs@22
       buildCommands:
         - npm ci
         - npm run build
+        - cp -r .next/static .next/standalone/.next/static
+        - cp -r public .next/standalone/public
       deployFiles:
         - .next/standalone
-        - .next/static
     run:
       base: nodejs@22
-      # Runs the Next.js server in worker mode via an env flag
-      start: node -e "require('.next/standalone/server')"
+      start: node .next/standalone/server.js
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
-        OPENAI_API_KEY: ${OPENAI_API_KEY}
         NODE_ENV: "production"
         ZEROPULSE_WORKER: "true"
 
   # ── Object Storage (private) ────────────────────────────────────────────
-  # Stores generated architecture diagram images and shareable badge PNGs.
   - setup: storage
     run:
       base: object-storage
