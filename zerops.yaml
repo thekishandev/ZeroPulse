@@ -1,5 +1,5 @@
 # ZeroPulse — zerops.yaml
-# The Zerops project, watching itself.
+# Build & deploy pipeline for runtime services.
 
 zerops:
   # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
@@ -34,16 +34,6 @@ zerops:
           port: 3000
           path: /api/health
 
-  # ── PostgreSQL 16 (private) ─────────────────────────────────────────────
-  - setup: db
-    run:
-      base: postgresql@16
-
-  # ── Valkey 7 cache (private) ────────────────────────────────────────────
-  - setup: cache
-    run:
-      base: valkey@7
-
   # ── Worker — background snapshot poller (private) ───────────────────────
   - setup: worker
     build:
@@ -65,9 +55,3 @@ zerops:
         MOCK_MODE: "false"
         NODE_ENV: "production"
         ZEROPULSE_WORKER: "true"
-
-  # ── Object Storage (private) ────────────────────────────────────────────
-  - setup: storage
-    run:
-      base: object-storage
-      objectStorageSize: 2
