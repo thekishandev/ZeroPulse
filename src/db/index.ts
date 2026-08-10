@@ -15,7 +15,51 @@ type DbInstance = ReturnType<typeof drizzle>;
 const g = globalThis as typeof globalThis & {
   __zpPool?: Pool;
   __zpDb?: DbInstance;
+  __zpSchemaInitialized?: boolean;
 };
+
+function ensureSchema(pool: Pool) {
+  if (g.__zpSchemaInitialized) return;
+  g.__zpSchemaInitialized = true;
+  pool
+    .query(
+      `
+    CREATE TABLE IF NOT EXISTS projects (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      zerops_project_id TEXT NOT NULL,
+      zerops_token TEXT NOT NULL DEFAULT '',
+      name TEXT,
+      scenario TEXT NOT NULL DEFAULT 'zeropulse',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS snapshots (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      services_json JSONB NOT NULL,
+      yaml_text TEXT,
+      source TEXT NOT NULL DEFAULT 'demo',
+      taken_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS advisor_reports (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      suggestions_json JSONB NOT NULL,
+      engine TEXT NOT NULL DEFAULT 'rules',
+      score TEXT NOT NULL DEFAULT '0',
+      summary TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS shares (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `,
+    )
+    .catch((err) => {
+      console.error("[ZeroPulse DB] Schema auto-init warning:", err.message);
+    });
+}
 
 function getDb(): DbInstance {
   if (g.__zpDb) return g.__zpDb;
@@ -31,6 +75,7 @@ function getDb(): DbInstance {
   }
 
   const pool = g.__zpPool ?? new Pool({ connectionString: url });
+  ensureSchema(pool);
   const db = drizzle(pool);
 
   if (process.env.NODE_ENV !== "production") {
