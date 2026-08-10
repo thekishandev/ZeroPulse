@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------------------
+   ZeroPulse design system — dark, technical, neon.
+---------------------------------------------------------------------------- */
+
+@theme {
+  --color-base: #060812;
+  --color-base-2: #0a0d1c;
+  --color-panel: #0e1226;
+  --color-panel-2: #131836;
+  --color-edge: #1d2347;
+  --color-edge-soft: #161a33;
+
+  --color-ink: #eef1ff;
+  --color-ink-dim: #aab1d6;
+  --color-ink-mute: #6f779e;
+
+  --color-public: #4f8cff;
+  --color-private: #9d5cff;
+  --color-ok: #22d39a;
+  --color-warn: #f5b544;
+  --color-error: #fb5d6b;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular,
+    "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ambient backdrop: deep radial glows + a faint moving grid. */
+.zp-backdrop {
+  position: relative;
+  isolation: isolate;
+}
+.zp-backdrop::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60rem 60rem at 12% -10%, rgba(79, 140, 255, 0.16), transparent 60%),
+    radial-gradient(50rem 50rem at 100% 0%, rgba(157, 92, 255, 0.14), transparent 55%),
+    radial-gradient(45rem 45rem at 50% 120%, rgba(34, 211, 154, 0.08), transparent 60%);
+  pointer-events: none;
+}
+.zp-backdrop::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(124, 134, 190, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 134, 190, 0.05) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, black, transparent 80%);
+  pointer-events: none;
+}
+
+/* Utility helpers */
+.zp-panel {
+  background: linear-gradient(180deg, rgba(19, 24, 54, 0.7), rgba(14, 18, 38, 0.7));
+  border: 1px solid var(--color-edge);
+  backdrop-filter: blur(8px);
+}
+.zp-panel-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.zp-panel-hover:hover {
+  border-color: color-mix(in oklab, var(--color-edge) 60%, var(--color-public));
+  transform: translateY(-2px);
+}
+
+.zp-mono {
+  font-family: var(--font-mono);
+}
+
+.zp-glow-public {
+  box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.35), 0 0 28px -6px rgba(79, 140, 255, 0.55);
+}
+.zp-glow-private {
+  box-shadow: 0 0 0 1px rgba(157, 92, 255, 0.35), 0 0 28px -6px rgba(157, 92, 255, 0.55);
+}
+
+.zp-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Animated topology edges */
+.zp-edge {
+  fill: none;
+  stroke-width: 1.6;
+  opacity: 0.9;
+}
+.zp-edge-flow {
+  stroke-dasharray: 6 8;
+  animation: zp-dash 1s linear infinite;
+}
+@keyframes zp-dash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* Status pulse */
+.zp-pulse {
+  position: relative;
+}
+.zp-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  animation: zp-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes zp-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Heartbeat line in the logo / hero */
+.zp-pulse-line {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: zp-draw 2.6s ease-in-out infinite;
+}
+@keyframes zp-draw {
+  0% {
+    stroke-dashoffset: 260;
+  }
+  45% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -260;
+  }
+}
+
+@keyframes zp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.zp-fade-up {
+  animation: zp-fade-up 0.5s ease both;
+}
+
+.zp-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(170, 177, 214, 0.06) 25%,
+    rgba(170, 177, 214, 0.16) 37%,
+    rgba(170, 177, 214, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: zp-shimmer 1.4s ease infinite;
+}
+@keyframes zp-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.zp-spin {
+  animation: zp-spin 0.8s linear infinite;
+}
+@keyframes zp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar */
+*::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #232a55;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

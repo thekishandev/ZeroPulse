@@ -1,0 +1,84 @@
+# ZeroPulse — zerops.yaml
+# The Zerops project, watching itself.
+#
+# Five services:
+#   frontend  — Next.js SSR app (public, httpSupport)
+#   db        — PostgreSQL 16 (private)
+#   cache     — Valkey 7 (private)
+#   worker    — Node.js cron poller (private)
+#   storage   — Object storage (private, for exported diagrams / badge PNGs)
+#
+# Get the free $15 credits: https://zerops.io/?utm_source=kunal
+
+zerops:
+  # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
+  - setup: frontend
+    build:
+      base: nodejs@22
+      buildCommands:
+        - npm ci
+        - npx drizzle-kit push          # push schema on every deploy
+        - npm run build
+      deployFiles:
+        - .next/standalone
+        - .next/static
+        - public
+    run:
+      base: nodejs@22
+      ports:
+        - port: 3000
+          httpSupport: true
+      start: node .next/standalone/server.js
+      envVariables:
+        DATABASE_URL: ${db_connectionString}
+        MOCK_MODE: "false"
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
+        ZEROPS_API_BASE: "https://api.app-prg1.zerops.io"
+        NODE_ENV: "production"
+        HOSTNAME: "0.0.0.0"
+        PORT: "3000"
+      healthCheck:
+        httpGet:
+          port: 3000
+          path: /api/health
+
+  # ── PostgreSQL 16 (private) ─────────────────────────────────────────────
+  - setup: db
+    run:
+      base: postgresql@16
+
+  # ── Valkey 7 cache (private) ────────────────────────────────────────────
+  - setup: cache
+    run:
+      base: valkey@7
+
+  # ── Worker — cron poller (private) ─────────────────────────────────────
+  # Polls all connected projects on a schedule, writes snapshots to Postgres.
+  # Shares the same build as frontend — uses the standalone bundle.
+  - setup: worker
+    build:
+      base: nodejs@22
+      buildCommands:
+        - npm ci
+        - npm run build
+      deployFiles:
+        - .next/standalone
+        - .next/static
+    run:
+      base: nodejs@22
+      # Runs the Next.js server in worker mode via an env flag
+      start: node -e "require('.next/standalone/server')"
+      envVariables:
+        DATABASE_URL: ${db_connectionString}
+        MOCK_MODE: "false"
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
+        ZEROPS_API_BASE: "https://api.app-prg1.zerops.io"
+        NODE_ENV: "production"
+        ZEROPULSE_WORKER: "true"
+
+  # ── Object Storage (private) ────────────────────────────────────────────
+  # Stores generated architecture diagram images and shareable badge PNGs.
+  - setup: storage
+    run:
+      base: object-storage
+      objectStorageSize: 2
