@@ -2,24 +2,27 @@
 # Build & deploy pipeline for runtime services.
 
 zerops:
-  # ── Frontend (Next.js SSR — standalone mode) ────────────────────────────
+  # ── Frontend (Next.js SSR) ─────────────────────────────────────────────
   - setup: frontend
     build:
       base: nodejs@22
       buildCommands:
         - npm ci
         - npm run build
-        - mkdir -p .next/standalone/.next
-        - cp -r .next/static .next/standalone/.next/static
-        - cp -r public .next/standalone/public
       deployFiles:
-        - .next/standalone/~
+        - .next
+        - public
+        - package.json
+        - node_modules
+      cache:
+        - node_modules
+        - .next/cache
     run:
       base: nodejs@22
       ports:
         - port: 3000
           httpSupport: true
-      start: node server.js
+      start: npm start
       envVariables:
         DATABASE_URL: ${db_connectionString}
         MOCK_MODE: "false"
@@ -34,11 +37,14 @@ zerops:
       buildCommands:
         - npm ci
         - npm run build
-        - mkdir -p .next/standalone/.next
-        - cp -r .next/static .next/standalone/.next/static
-        - cp -r public .next/standalone/public
       deployFiles:
-        - .next/standalone/~
+        - .next
+        - public
+        - package.json
+        - node_modules
+      cache:
+        - node_modules
+        - .next/cache
     run:
       base: nodejs@22
       start: node server.js
